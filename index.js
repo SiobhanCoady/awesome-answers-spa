@@ -15,6 +15,22 @@ function getQuestion(id) {
     .then(function(res) { return res.json() })
 }
 
+function postQuestion(questionParams) {
+  return fetch(
+    `${DOMAIN}/api/v1/questions?api_token=${API_TOKEN}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // {title: 'asdfasdf', body: 'adfasf'}
+      // should look like:
+      // {question: {title: 'asdfasdf', body: 'adfasf'}}
+      body: JSON.stringify({question: questionParams})
+    }
+  )
+}
+
 function renderQuestions(questions) {
   return questions.map(function(question) {
     return `
@@ -31,11 +47,22 @@ function renderQuestions(questions) {
 }
 
 function renderQuestion(question) {
+  console.log(question);
   return `
     <button class="back">Back</button>
     <h1>${question.title}</h1>
     <p>${question.body}</p>
+    <h4>Answers</h4>
+    <ul class="answers-list">
+      ${ renderAnswers(question.answers) }
+    </ul>
   `
+}
+
+function renderAnswers(answers) {
+  return answers.map(function(answer) {
+    return `<li class="answer">${answer.body}</li>`;
+  }).join('');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -45,10 +72,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // rendered by the browser.
   const questionsList = document.querySelector('#questions-list');
   const questionDetails = document.querySelector('#question-details');
+  const questionForm = document.querySelector('#question-form');
 
-  getQuestions()
+  function loadQuestions() {
+    getQuestions()
     .then(renderQuestions)
     .then(function(html) { questionsList.innerHTML = html })
+  }
+
+  loadQuestions();
 
   questionsList.addEventListener('click', function(event) {
     const { target } = event;
@@ -56,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (target.matches('.question-link')) {
       event.preventDefault();
       const questionId = target.getAttribute('data-id');
-
 
       getQuestion(questionId)
         .then(function(question) {
@@ -75,5 +106,21 @@ document.addEventListener('DOMContentLoaded', function() {
       questionDetails.classList.add('hidden');
       questionsList.classList.remove('hidden');
     }
+  });
+
+  questionForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const title = event.currentTarget.querySelector('#title');
+    const body = event.currentTarget.querySelector('#body');
+
+    const fData = new FormData(event.currentTarget);
+
+    postQuestion({title: fData.get('title'), body: fData.get('body')})
+      .then(function() {
+        loadQuestions();
+        title.value = '';
+        body.value = '';
+      })
   });
 });
