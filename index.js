@@ -14,3 +14,26 @@ function getQuestion(id) {
   return fetch(`${DOMAIN}/api/v1/questions/${id}?api_token=${API_TOKEN}`)
     .then(function(res) { return res.json() })
 }
+
+function renderQuestions(questions) {
+  return questions.map(function(question) {
+    return `
+      <div class="question-summary">
+        ${question.title}
+      </div>
+      <hr>
+    `
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // We put our DOM queries inside a DOMContentLoaded event handler because the
+  // queried nodes are likely not rendered yet. Javascript inside of a
+  // DOMContentLoaded event handler will run once every HTML tag has been
+  // rendered by the browser.
+  const questionsList = document.querySelector('#questions-list');
+
+  getQuestions()
+    .then(renderQuestions)
+    .then(function(html) { questionsList.innerHTML = html })
+})
